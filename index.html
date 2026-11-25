@@ -1,0 +1,75 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Citeit | APA, MLA, IEEE and Harvard citations in seconds</title>
+<meta name="description" content="Fill a short form, get a correct citation in APA 7, MLA 9, IEEE or Harvard. Build a bibliography, copy it. Offline, no signup.">
+<meta property="og:title" content="Citeit"><meta property="og:description" content="APA, MLA, IEEE and Harvard citations. Build a bibliography and copy it."><meta property="og:image" content="og.png"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:image" content="og.png">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='14' fill='%23611a2a'/%3E%3Ctext x='50' y='72' font-size='80' text-anchor='middle' fill='%23f3e9d2' font-family='Georgia'%3E%E2%80%9C%3C/text%3E%3C/svg%3E">
+<style>
+:root{--w:#611a2a;--p:#f3e9d2;--g:#2f4a3a}
+*{box-sizing:border-box}body{margin:0;background:var(--p);color:#222;font:16px/1.55 Georgia,"Palatino Linotype",serif}
+header{background:var(--w);color:var(--p);padding:26px 22px;border-bottom:6px double var(--p)}
+header h1{margin:0;font-size:34px;letter-spacing:.5px}header p{margin:4px 0 0;opacity:.85;font-style:italic}
+main{max-width:1000px;margin:0 auto;padding:20px;display:grid;grid-template-columns:1fr 1fr;gap:22px}@media(max-width:800px){main{grid-template-columns:1fr}}
+.card{background:#fffaf0;border:1px solid #cdbf9d;padding:18px;box-shadow:0 2px 0 #cdbf9d}
+h2{margin:0 0 10px;font-size:15px;text-transform:uppercase;letter-spacing:1.5px;color:var(--w)}
+label{display:block;font-size:13px;margin:10px 0 3px;color:#555}
+input,select{width:100%;padding:8px 10px;border:1px solid #b9ab88;background:#fff;font:inherit;border-radius:2px}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+button{font:inherit;background:var(--w);color:var(--p);border:0;padding:9px 16px;cursor:pointer;border-radius:2px;margin-top:14px}button.g{background:var(--g)}button.o{background:transparent;color:var(--w);border:1px solid var(--w)}
+.hint{font-size:12px;color:#777}
+#cur{background:#fff;border-left:4px solid var(--w);padding:12px 14px;min-height:70px;margin-bottom:6px}
+ol{padding-inline-start:22px}li{margin:0 0 12px}li .x{color:#a33;cursor:pointer;font-size:12px;margin-inline-start:8px}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}.tabs button{margin:0;padding:5px 12px;font-size:14px;background:transparent;color:var(--w);border:1px solid var(--w)}.tabs button.on{background:var(--w);color:var(--p)}
+footer{text-align:center;color:#777;font-size:13px;padding:20px}
+</style></head><body>
+<header><h1>Citeit</h1><p>Fill in the details. Get the citation. Build the bibliography.</p></header>
+<main><section class="card"><h2>Source</h2>
+<label>Type</label><select id="type"><option value="web">Website</option><option value="book">Book</option><option value="art">Journal article</option></select>
+<label>Authors (one per line, "Last, First")</label><textarea id="au" rows="3" style="width:100%;padding:8px;border:1px solid #b9ab88;font:inherit" placeholder="Omran, Mostafa&#10;Hassan, Sara"></textarea>
+<label>Title</label><input id="ti">
+<div class="row"><div><label>Year</label><input id="yr" inputmode="numeric"></div><div><label id="pl">Website name</label><input id="pu"></div></div>
+<div class="row" id="artrow"><div><label>Volume(issue)</label><input id="vo" placeholder="12(3)"></div><div><label>Pages</label><input id="pg" placeholder="45-67"></div></div>
+<div class="row"><div><label>URL or DOI</label><input id="ur"></div><div><label>Accessed (YYYY-MM-DD)</label><input id="ac" placeholder="2026-11-25"></div></div>
+<button id="add">Add to bibliography</button><button class="o" id="clr">Clear form</button></section>
+<section class="card"><h2>Citation</h2><div class="tabs" id="tabs"></div><div id="cur" dir="auto"></div><div class="hint">Italics are kept when you paste into Word or Docs. Check your department's style guide for details.</div>
+<h2 style="margin-top:22px">Bibliography <span id="n"></span></h2><ol id="bib"></ol><button class="g" id="copy">Copy bibliography</button><button class="o" id="exp">Clear all</button></section></main>
+<footer>Runs in your browser. Nothing is uploaded. Saved on this device.</footer>
+<script>
+const $=i=>document.getElementById(i);const S=['APA 7','MLA 9','IEEE','Harvard'];let st=0,bib=JSON.parse(localStorage.getItem('citeit')||'[]');
+const mon=['Jan.','Feb.','Mar.','Apr.','May','June','July','Aug.','Sept.','Oct.','Nov.','Dec.'],full=['January','February','March','April','May','June','July','August','September','October','November','December'];
+function names(){return $('au').value.split('\n').map(s=>s.trim()).filter(Boolean).map(s=>{let [l,f]=s.includes(',')?s.split(',').map(x=>x.trim()):[s.split(' ').slice(-1)[0],s.split(' ').slice(0,-1).join(' ')];return{l,f:f||'',i:(f||'').split(/[\s-]+/).filter(Boolean).map(x=>x[0].toUpperCase()+'.')}})}
+const E=s=>s.replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+function fmt(d,s){const a=d.au,y=d.yr||'n.d.',t=E(d.ti||'Untitled'),p=E(d.pu||''),u=d.ur?(/^10\./.test(d.ur)?'https://doi.org/'+d.ur:d.ur):'';let au='';
+const dt=d.ac?new Date(d.ac+'T00:00:00'):null,okd=dt&&!isNaN(dt);
+if(s==0){const f=a.map(n=>n.l+', '+n.i.join(' '));au=f.length>2?f.slice(0,-1).join(', ')+', & '+f.slice(-1):f.join(' & ');au=au?au+' ':'';
+ if(d.type=='book')return `${au}(${y}). <i>${t}</i>. ${p}.${u?' '+u:''}`;
+ if(d.type=='art')return `${au}(${y}). ${t}. <i>${p}</i>${d.vo?', <i>'+E(d.vo)+'</i>':''}${d.pg?', '+E(d.pg):''}.${u?' '+u:''}`;
+ return `${au}(${y}). <i>${t}</i>. ${p}.${u?' '+u:''}`}
+if(s==1){au=a.length==0?'':a.length==1?`${a[0].l}, ${a[0].f}`:a.length==2?`${a[0].l}, ${a[0].f}, and ${a[1].f} ${a[1].l}`:`${a[0].l}, ${a[0].f}, et al`;au=au?au+'. ':'';
+ const acc=okd?` Accessed ${dt.getDate()} ${mon[dt.getMonth()]} ${dt.getFullYear()}.`:'';
+ if(d.type=='book')return `${au}<i>${t}</i>. ${p}, ${y}.`;
+ if(d.type=='art')return `${au}"${t}." <i>${p}</i>${d.vo?', vol. '+E(d.vo):''}, ${y}${d.pg?', pp. '+E(d.pg):''}.${u?' '+u+'.':''}`;
+ return `${au}"${t}." <i>${p}</i>, ${y}${u?', '+u:''}.${acc}`}
+if(s==2){const f=a.map(n=>n.i.join(' ')+' '+n.l);au=f.length>2?f.slice(0,-1).join(', ')+', and '+f.slice(-1):f.join(' and ');au=au?au+', ':'';
+ if(d.type=='book')return `${au}<i>${t}</i>. ${p}, ${y}.`;
+ if(d.type=='art')return `${au}"${t}," <i>${p}</i>${d.vo?', vol. '+E(d.vo):''}${d.pg?', pp. '+E(d.pg):''}, ${y}.${u?' '+u:''}`;
+ return `${au}"${t}," ${p}, ${y}. [Online]. Available: ${u}${okd?` (accessed ${full[dt.getMonth()].slice(0,3)}. ${dt.getDate()}, ${dt.getFullYear()}).`:''}`}
+const f=a.map(n=>n.l+', '+n.i.join(''));au=f.length>3?f[0]+' et al.':f.length>1?f.slice(0,-1).join(', ')+' and '+f.slice(-1):f[0]||'';au=au?au+' ':'';
+ if(d.type=='book')return `${au}(${y}) <i>${t}</i>. ${p}.`;
+ if(d.type=='art')return `${au}(${y}) '${t}', <i>${p}</i>${d.vo?', '+E(d.vo):''}${d.pg?', pp. '+E(d.pg):''}.${u?' Available at: '+u+'.':''}`;
+ return `${au}(${y}) <i>${t}</i>. Available at: ${u}${okd?` (Accessed: ${dt.getDate()} ${full[dt.getMonth()]} ${dt.getFullYear()}).`:''}`}
+const cur=()=>({type:$('type').value,au:names(),ti:$('ti').value.trim(),yr:$('yr').value.trim(),pu:$('pu').value.trim(),vo:$('vo').value.trim(),pg:$('pg').value.trim(),ur:$('ur').value.trim(),ac:$('ac').value.trim()});
+function draw(){$('pl').textContent=$('type').value=='book'?'Publisher':$('type').value=='art'?'Journal':'Website name';$('artrow').style.display=$('type').value=='art'?'grid':'none';
+$('tabs').innerHTML=S.map((x,i)=>`<button class="${i==st?'on':''}" data-i="${i}">${x}</button>`).join('');
+const d=cur();$('cur').innerHTML=d.ti||d.au.length?fmt(d,st):'<span class="hint">Your citation appears here.</span>';
+const sorted=bib.map((b,i)=>({b,i,t:fmt(b,st)})).sort((x,y)=>x.t.replace(/<[^>]+>/g,'').localeCompare(y.t.replace(/<[^>]+>/g,'')));
+$('bib').innerHTML=sorted.map(o=>`<li dir="auto">${o.t}<span class="x" data-d="${o.i}">remove</span></li>`).join('');$('n').textContent=bib.length?'('+bib.length+')':'';
+localStorage.setItem('citeit',JSON.stringify(bib))}
+document.addEventListener('input',draw);$('tabs').onclick=e=>{if(e.target.dataset.i){st=+e.target.dataset.i;draw()}};
+$('bib').onclick=e=>{if(e.target.dataset.d){bib.splice(+e.target.dataset.d,1);draw()}};
+$('add').onclick=()=>{const d=cur();if(!d.ti)return;bib.push(d);draw()};$('clr').onclick=()=>{document.querySelectorAll('input,textarea').forEach(i=>i.value='');draw()};
+$('exp').onclick=()=>{bib=[];draw()};$('copy').onclick=async()=>{const h='<div>'+[...$('bib').children].map(l=>'<p>'+l.innerHTML.replace(/<span class="x".*?<\/span>/,'')+'</p>').join('')+'</div>',t=[...$('bib').children].map(l=>l.firstChild.parentElement.textContent.replace('remove','')).join('\n');
+try{await navigator.clipboard.write([new ClipboardItem({'text/html':new Blob([h],{type:'text/html'}),'text/plain':new Blob([t],{type:'text/plain'})})])}catch(e){await navigator.clipboard.writeText(t)}$('copy').textContent='Copied';setTimeout(()=>$('copy').textContent='Copy bibliography',1200)};
+if(/demo=1/.test(location.search)){$('type').value='art';$('au').value='Vaswani, Ashish\nShazeer, Noam';$('ti').value='Attention is all you need';$('yr').value='2017';$('pu').value='Advances in Neural Information Processing Systems';$('vo').value='30';$('pg').value='5998-6008';
+bib=[{type:'book',au:[{l:'Knuth',f:'Donald',i:['D.']}],ti:'The Art of Computer Programming',yr:'1997',pu:'Addison-Wesley',vo:'',pg:'',ur:'',ac:''},{type:'web',au:[{l:'Mozilla',f:'',i:[]}],ti:'MDN Web Docs: Fetch API',yr:'2024',pu:'MDN',vo:'',pg:'',ur:'https://developer.mozilla.org/docs/Web/API/Fetch_API',ac:'2026-11-25'}]}
+draw();
+</script></body></html>
